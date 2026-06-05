@@ -1,0 +1,28 @@
+version: "3.9"
+
+services:
+  annadaan:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: annadaan:latest
+    container_name: annadaan-app
+    ports:
+      - "8080:8080"       # App available at http://localhost:8080
+    volumes:
+      # Persist SQLite DB and uploaded food photos across restarts
+      - annadaan-data:/data/freefood
+    environment:
+      # JVM options: 256 MB min, 512 MB max — fine for a community app
+      - JAVA_OPTS=-Xms256m -Xmx512m -Dfile.encoding=UTF-8
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  annadaan-data:
+    driver: local

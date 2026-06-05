@@ -1,0 +1,28 @@
+# Build output — never send to Docker daemon
+target/
+
+# IDE and OS files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Git history
+.git/
+.gitignore
+
+# Logs
+*.log
+logs/
+
+# SQLite runtime DB (generated at runtime, not part of source)
+*.db
+*.db-shm
+*.db-wal
+
+# Docs (not needed in image)
+README.md

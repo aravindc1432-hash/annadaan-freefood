@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>AnnaDaan — Free Food India</title>
+<link href="https://fonts.googleapis.com/css2?family=Yatra+One&family=Hind:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Leaflet for map -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-icon">🍱</span>
+      <div><h1>AnnaDaan</h1><p>Free Food Events Across India</p></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-primary" id="btnOpenPost">+ Share Free Food</button>
+      <div class="auth-area" id="authArea">
+        <button class="btn-auth" id="btnLogin">Login</button>
+        <button class="btn-auth btn-register" id="btnRegister">Register</button>
+      </div>
+      <div class="user-area hidden" id="userArea">
+        <span id="userGreet"></span>
+        <button class="btn-auth" id="btnLogout">Logout</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="hero-strip">🙏 Share food. Feed a soul. Be the change. &nbsp;|&nbsp; Anyone can post &amp; verify food events!</div>
+
+<main class="container">
+
+  <!-- Location bar -->
+  <section class="location-bar">
+    <div class="location-status" id="locationStatus">
+      <span class="dot dot-idle"></span>
+      <span id="locationText">Click to find food near you</span>
+    </div>
+    <div class="loc-btns">
+      <button class="btn-locate" id="btnLocate">📍 Use My Location</button>
+      <button class="btn-view-toggle" id="btnToggleView">🗺️ Map View</button>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card"><span class="stat-num" id="statCount">—</span><span class="stat-label">Active Events</span></div>
+    <div class="stat-card"><span class="stat-num" id="statCities">—</span><span class="stat-label">Cities</span></div>
+    <div class="stat-card"><span class="stat-num" id="statServings">—</span><span class="stat-label">People to be Served</span></div>
+    <div class="stat-card"><span class="stat-num" id="statGoing">—</span><span class="stat-label">People Going</span></div>
+  </div>
+
+  <!-- Filter bar -->
+  <div class="filter-bar">
+    <input type="text" id="searchInput" placeholder="🔍  Search by city, food, or provider…"/>
+    <select id="stateFilter"><option value="">All States</option></select>
+  </div>
+
+  <!-- MAP VIEW (hidden by default) -->
+  <div id="mapContainer" class="map-container hidden">
+    <div id="map"></div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <section id="eventsSection">
+    <div id="loadingMsg" class="loading-msg">Loading food events…</div>
+    <div id="eventsList" class="events-grid"></div>
+    <div id="emptyMsg" class="empty-msg hidden">🍽️ No active food events right now.<br><small>Be the first to share one!</small></div>
+    <!-- PAGINATION -->
+    <div class="pagination" id="pagination"></div>
+  </section>
+
+</main>
+
+<!-- ══ POST / EDIT MODAL ══ -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="postModal">
+    <div class="modal-header">
+      <h2 id="modalTitle">📢 Share Free Food Event</h2>
+      <button class="modal-close" id="btnCloseModal">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="eventForm" enctype="multipart/form-data">
+        <input type="hidden" id="editId"/>
+
+        <!-- Witness notice -->
+        <div class="witness-toggle">
+          <label class="toggle-label">
+            <input type="checkbox" id="isWitness"/>
+            <span>👁️ I saw this food distribution (I'm reporting it, not organising it)</span>
+          </label>
+        </div>
+        <div class="witness-fields hidden" id="witnessFields">
+          <div class="form-group">
+            <label>Your Name (Reporter)</label>
+            <input type="text" id="witnessName" placeholder="Your name as the reporter"/>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Organiser's Name / Organisation *</label>
+            <input type="text" id="providerName" placeholder="e.g. Ramesh Kumar / Seva Trust" required/>
+          </div>
+          <div class="form-group">
+            <label>Contact Number</label>
+            <input type="tel" id="contactNumber" placeholder="Optional"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>What Food Is Being Provided? *</label>
+          <textarea id="foodDescription" rows="2" placeholder="e.g. Rice, Dal, Sabzi, Roti — full meals for 100 people"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Full Address / Landmark *</label>
+          <input type="text" id="address" placeholder="e.g. Near Shivaji Statue, Main Road" required/>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>City *</label>
+            <input type="text" id="city" placeholder="e.g. Mumbai" required/>
+          </div>
+          <div class="form-group">
+            <label>State *</label>
+            <select id="state" required>
+              <option value="">— Select —</option>
+              <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option>
+              <option>Bihar</option><option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option>
+              <option>Haryana</option><option>Himachal Pradesh</option><option>Jharkhand</option>
+              <option>Karnataka</option><option>Kerala</option><option>Madhya Pradesh</option>
+              <option>Maharashtra</option><option>Manipur</option><option>Meghalaya</option>
+              <option>Mizoram</option><option>Nagaland</option><option>Odisha</option><option>Punjab</option>
+              <option>Rajasthan</option><option>Sikkim</option><option>Tamil Nadu</option>
+              <option>Telangana</option><option>Tripura</option><option>Uttar Pradesh</option>
+              <option>Uttarakhand</option><option>West Bengal</option><option>Delhi</option>
+              <option>Jammu &amp; Kashmir</option><option>Ladakh</option><option>Chandigarh</option>
+              <option>Puducherry</option><option>Lakshadweep</option>
+              <option>Andaman &amp; Nicobar Islands</option><option>Dadra &amp; Nagar Haveli</option>
+              <option>Daman &amp; Diu</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>GPS Location * <button type="button" class="btn-inline" id="btnGetGPS">📍 Get My GPS</button></label>
+          <div class="form-grid">
+            <input type="number" id="latitude" placeholder="Latitude (e.g. 19.0760)" step="any" required/>
+            <input type="number" id="longitude" placeholder="Longitude (e.g. 72.8777)" step="any" required/>
+          </div>
+          <small class="hint">Or open Google Maps → long-press → copy coordinates.</small>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Date of Event *</label>
+            <input type="date" id="eventDate" required/>
+          </div>
+          <div class="form-group">
+            <label>Approx. People to Serve</label>
+            <input type="number" id="quantity" placeholder="e.g. 200" min="1"/>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Distribution Starts *</label>
+            <input type="time" id="startTime" required/>
+          </div>
+          <div class="form-group">
+            <label>Closes / Ends At *</label>
+            <input type="time" id="endTime" required/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Food Photo (optional)</label>
+          <input type="file" id="photoInput" accept="image/*"/>
+          <div class="photo-preview hidden" id="photoPreview">
+            <img id="photoPreviewImg" src="" alt="Preview"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Extra Notes</label>
+          <textarea id="notes" rows="2" placeholder="e.g. Free for all, bring your own container…"></textarea>
+        </div>
+        <div id="formError" class="form-error hidden"></div>
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" id="btnCancelModal">Cancel</button>
+          <button type="submit" class="btn-primary" id="btnSubmit">🍱 Post Event</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DETAIL MODAL ══ -->
+<div class="modal-overlay" id="detailOverlay">
+  <div class="modal modal-detail" id="detailModal">
+    <div class="modal-header">
+      <h2>📍 Event Details</h2>
+      <button class="modal-close" id="btnCloseDetail">✕</button>
+    </div>
+    <div class="modal-body" id="detailBody"></div>
+  </div>
+</div>
+
+<!-- ══ AUTH MODAL ══ -->
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal modal-sm" id="authModal">
+    <div class="modal-header">
+      <h2 id="authTitle">Login</h2>
+      <button class="modal-close" id="btnCloseAuth">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="authForm">
+        <div id="registerFields" class="hidden">
+          <div class="form-group">
+            <label>Display Name *</label>
+            <input type="text" id="authDisplayName" placeholder="Your name"/>
+          </div>
+          <div class="form-group">
+            <label>Phone (optional)</label>
+            <input type="tel" id="authPhone" placeholder="Mobile number"/>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Username *</label>
+          <input type="text" id="authUsername" placeholder="e.g. ramesh_k" autocomplete="username"/>
+        </div>
+        <div class="form-group">
+          <label>Password *</label>
+          <input type="password" id="authPassword" placeholder="Min 6 characters" autocomplete="current-password"/>
+        </div>
+        <div id="authError" class="form-error hidden"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="btnAuthSubmit">Login</button>
+        </div>
+        <p style="text-align:center;margin-top:14px;font-size:13px;color:#666;">
+          <span id="authSwitch"></span>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ══ DUPLICATE MODAL ══ -->
+<div class="modal-overlay" id="dupOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>📋 Repost for Another Day</h2>
+      <button class="modal-close" id="btnCloseDup">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>New Date for this Event</label>
+        <input type="date" id="dupDate"/>
+      </div>
+      <div class="form-actions">
+        <button class="btn-secondary" id="btnCancelDup">Cancel</button>
+        <button class="btn-primary" id="btnConfirmDup">📋 Duplicate Event</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CHECKIN MODAL ══ -->
+<div class="modal-overlay" id="checkinOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2>✅ Confirm You're There</h2>
+      <button class="modal-close" id="btnCloseCheckin">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:#666;margin-bottom:14px;">Let others know this food distribution is happening right now!</p>
+      <div class="form-group">
+        <label>Your Name</label>
+        <input type="text" id="checkinName" placeholder="e.g. Priya"/>
+      </div>
+      <div class="form-group">
+        <label>Note (optional)</label>
+        <input type="text" id="checkinNote" placeholder="e.g. Food is still available, come fast!"/>
+      </div>
+      <div id="checkinError" class="form-error hidden"></div>
+      <div class="form-actions">
+        <button class="btn-secondary" id="btnCancelCheckin">Cancel</button>
+        <button class="btn-primary" id="btnConfirmCheckin">📍 Confirm Location</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer class="site-footer">
+  <p>AnnaDaan 🍱 — Sharing food, spreading love across India &nbsp;|&nbsp;
+  <a href="admin/" style="color:rgba(255,255,255,0.7)">Admin Panel</a></p>
+</footer>
+
+<script src="js/app.js"></script>
+</body>
+</html>
